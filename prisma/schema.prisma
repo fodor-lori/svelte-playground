@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  episodes  Episode[]
+  comments  Comment[]
+  votes     CommentVote[]
+}
+
+model Topic {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  episodes    Episode[]
+}
+
+model Episode {
+  id          Int      @id @default(autoincrement())
+  description String?
+  url         String
+  uploaderId  Int
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  uploader    User @relation(fields: [uploaderId], references: [id])
+  comments    Comment[]
+  topics      Topic[]
+}
+
+model Comment {
+  id             Int      @id @default(autoincrement())
+  content        String
+  authorId       Int
+  episodeId      Int
+  helpfulCount   Int @default(0)
+  unhelpfulCount Int @default(0)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  episode        Episode @relation(fields: [episodeId], references: [id])
+  author         User @relation(fields: [authorId], references: [id])
+  votes          CommentVote[]
+}
+
+model CommentVote {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  commentId Int
+  value     VoteValue
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id])
+  comment Comment @relation(fields: [commentId], references: [id])
+
+  @@unique([userId, commentId])
+}
+
+enum VoteValue {
+  HELPFUL
+  NOT_HELPFUL
+}
